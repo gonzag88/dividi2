@@ -6,7 +6,7 @@ import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog'
 import { ExpenseScreen } from './ui/ExpenseScreen'
 import { GroupScreen } from './ui/GroupScreen'
 import { GroupsScreen } from './ui/GroupsScreen'
-import { Header } from './ui/Header'
+import { Topbar } from './ui/Topbar'
 import { ReportScreen } from './ui/ReportScreen'
 import { navigate, paths, useRoute } from './ui/useRoute'
 
@@ -73,8 +73,9 @@ export default function App() {
   if (error) {
     return (
       <div className="app">
-        <Header title="dividi2" />
+        <Topbar />
         <main className="content">
+          <h1 className="screen-title">dividi2</h1>
           <div className="card empty">
             <p>{error}</p>
             <p>Revisá que el navegador tenga habilitado el almacenamiento local.</p>
@@ -87,7 +88,7 @@ export default function App() {
   if (groups === null) {
     return (
       <div className="app">
-        <Header title="dividi2" />
+        <Topbar />
       </div>
     )
   }

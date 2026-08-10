@@ -6,6 +6,7 @@ import {
   addPerson,
   canAddExpenses,
   expensesTouchingPerson,
+  groupTotalCents,
   personName,
   removeExpense,
   removePerson,
@@ -14,7 +15,9 @@ import {
 import type { Expense, Group, Person } from '../domain/types'
 import { validatePersonName } from '../domain/validation'
 import type { ConfirmRequest } from './ConfirmDialog'
-import { BackButton, Header } from './Header'
+import { SwipeToDelete } from './SwipeToDelete'
+import { initial, tileClass } from './tiles'
+import { BackButton, Topbar } from './Topbar'
 import { goBack, navigate, paths } from './useRoute'
 
 interface Props {
@@ -28,21 +31,39 @@ export function GroupScreen({ group, onSave, onConfirm }: Props) {
 
   return (
     <>
-      <Header
-        title={group.name}
-        left={<BackButton label="Grupos" onClick={() => goBack(paths.groups)} />}
+      <Topbar
+        left={<BackButton label="Volver a grupos" onClick={() => goBack(paths.groups)} />}
         right={
-          <button type="button" className="btn-link" onClick={() => navigate(paths.report(group.id))}>
+          <button
+            type="button"
+            className="btn-link"
+            onClick={() => navigate(paths.report(group.id))}
+          >
             Reporte
           </button>
         }
       />
 
       <main className={`content${canAddExpenses(group) ? ' has-fab' : ''}`}>
-        {/* En un grupo recién creado lo único accionable es sumar gente: no
-            tiene sentido mostrar tres tarjetas vacías arriba de todo. */}
+        <h1 className="screen-title">{group.name}</h1>
+
+        {/* En un grupo recién creado lo único accionable es sumar gente. */}
         {hasPeople && (
           <>
+            <section className="hero">
+              <div className="hero-label">Total gastado</div>
+              <div className="hero-amount">{formatCents(groupTotalCents(group))}</div>
+              <div className="hero-meta">
+                <span>
+                  {group.people.length}{' '}
+                  {group.people.length === 1 ? 'integrante' : 'integrantes'}
+                </span>
+                <span>
+                  {group.expenses.length} {group.expenses.length === 1 ? 'gasto' : 'gastos'}
+                </span>
+              </div>
+            </section>
+
             <BalancesSection group={group} />
             <DebtsSection group={group} />
             <ExpensesSection
@@ -62,9 +83,10 @@ export function GroupScreen({ group, onSave, onConfirm }: Props) {
         <button
           type="button"
           className="fab"
+          aria-label="Agregar gasto"
           onClick={() => navigate(paths.newExpense(group.id))}
         >
-          + Gasto
+          +
         </button>
       )}
     </>
@@ -75,18 +97,16 @@ function BalancesSection({ group }: { group: Group }) {
   const balances = computeBalances(group)
 
   return (
-    <section>
+    <section className="section">
       <h2 className="section-title">Balances</h2>
-      <div className="card">
+      <div className="stat-grid">
         {balances.map((balance) => (
-          <div key={balance.personId} className="row">
-            <div className="row-main">
-              <div className="row-title">{balance.name}</div>
-              <div className="row-sub">{describeBalance(balance.cents)}</div>
-            </div>
-            <span className={`row-amount ${balanceClass(balance.cents)}`}>
+          <div key={balance.personId} className="stat">
+            <div className="stat-name">{balance.name}</div>
+            <div className={`stat-amount ${balanceClass(balance.cents)}`}>
               {formatSignedCents(balance.cents)}
-            </span>
+            </div>
+            <div className="stat-note">{describeBalance(balance.cents)}</div>
           </div>
         ))}
       </div>
@@ -99,26 +119,93 @@ function DebtsSection({ group }: { group: Group }) {
   const debts = simplifyDebts(balances)
 
   return (
-    <section>
+    <section className="section">
       <h2 className="section-title">Deudas</h2>
       <div className="card">
         {isSettled(balances) || debts.length === 0 ? (
           <div className="empty">
-            <p>Está todo saldado.</p>
+            <span className="pill">Está todo saldado</span>
           </div>
         ) : (
           debts.map((debt, index) => (
             <div key={`${debt.fromId}-${debt.toId}-${index}`} className="row">
+              <span className={`tile ${tileClass(debt.fromId)}`}>{initial(debt.fromName)}</span>
               <div className="row-main">
-                <div className="row-title">
-                  {debt.fromName} → {debt.toName}
-                </div>
+                <span className="row-title">{debt.fromName}</span>
+                <span className="row-sub">le paga a {debt.toName}</span>
               </div>
               <span className="row-amount">{formatCents(debt.cents)}</span>
             </div>
           ))
         )}
       </div>
+    </section>
+  )
+}
+
+function ExpensesSection({
+  group,
+  expenses,
+  onSave,
+  onConfirm,
+}: Props & { expenses: Expense[] }) {
+  const enabled = canAddExpenses(group)
+
+  const confirmRemove = (expense: Expense) => {
+    onConfirm({
+      title: `Eliminar "${expense.description}"`,
+      message:
+        'Se va a eliminar el gasto y se van a recalcular los balances. Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar gasto',
+      onConfirm: () => onSave(removeExpense(group, expense.id)),
+    })
+  }
+
+  return (
+    <section className="section">
+      {/* No hay acción acá: el botón flotante está siempre a mano. */}
+      <h2 className="section-title">Gastos</h2>
+
+      {!enabled ? (
+        <div className="card empty">
+          <p>Para cargar un gasto hacen falta al menos 2 integrantes.</p>
+        </div>
+      ) : expenses.length === 0 ? (
+        <div className="card empty">
+          <p>Todavía no hay gastos.</p>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => navigate(paths.newExpense(group.id))}
+          >
+            Agregar gasto
+          </button>
+        </div>
+      ) : (
+        <div className="cards">
+          {expenses.map((expense) => (
+            <SwipeToDelete key={expense.id} onDelete={() => confirmRemove(expense)}>
+              <button
+                type="button"
+                className="row tappable"
+                onClick={() => navigate(paths.expense(group.id, expense.id))}
+              >
+                <span className={`tile ${tileClass(expense.id)}`}>
+                  {initial(expense.description)}
+                </span>
+                <span className="row-main">
+                  <span className="row-title">{expense.description}</span>
+                  <span className="row-sub">
+                    Pagó {personName(group, expense.paidBy)} · entre{' '}
+                    {expense.participants.length}
+                  </span>
+                </span>
+                <span className="row-amount">{formatCents(expense.amountCents)}</span>
+              </button>
+            </SwipeToDelete>
+          ))}
+        </div>
+      )}
     </section>
   )
 }
@@ -177,10 +264,10 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
   }
 
   return (
-    <section>
+    <section className="section">
       <div className="section-head">
         <h2 className="section-title">Integrantes</h2>
-        <button type="button" className="btn-link small" onClick={open}>
+        <button type="button" className="btn-link" onClick={open}>
           + Agregar
         </button>
       </div>
@@ -194,8 +281,9 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
 
         {group.people.map((person) => (
           <div key={person.id} className="row">
+            <span className={`tile ${tileClass(person.id)}`}>{initial(person.name)}</span>
             <div className="row-main">
-              <div className="row-title">{person.name}</div>
+              <span className="row-title">{person.name}</span>
             </div>
             <button
               type="button"
@@ -216,6 +304,7 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
               submit()
             }}
           >
+            <span className="tile tile-mint">+</span>
             <input
               ref={inputRef}
               className="row-input"
@@ -240,83 +329,10 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
   )
 }
 
-function ExpensesSection({
-  group,
-  expenses,
-  onSave,
-  onConfirm,
-}: Props & { expenses: Expense[] }) {
-  const enabled = canAddExpenses(group)
-
-  const confirmRemove = (expense: Expense) => {
-    onConfirm({
-      title: `Eliminar "${expense.description}"`,
-      message: 'Se va a eliminar el gasto y se van a recalcular los balances. Esta acción no se puede deshacer.',
-      confirmLabel: 'Eliminar gasto',
-      onConfirm: () => onSave(removeExpense(group, expense.id)),
-    })
-  }
-
-  return (
-    <section>
-      {/* No hay acción acá: el botón flotante está siempre a mano. */}
-      <h2 className="section-title">Gastos</h2>
-
-      <div className="card">
-        {!enabled ? (
-          <div className="empty">
-            <p>Para cargar un gasto hacen falta al menos 2 integrantes.</p>
-          </div>
-        ) : expenses.length === 0 ? (
-          <div className="empty">
-            <p>Todavía no hay gastos.</p>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => navigate(paths.newExpense(group.id))}
-            >
-              Agregar gasto
-            </button>
-          </div>
-        ) : (
-          expenses.map((expense) => (
-            <div key={expense.id} className="row">
-              <button
-                type="button"
-                className="row-button tappable"
-                onClick={() => navigate(paths.expense(group.id, expense.id))}
-              >
-                <span className="row-main">
-                  <span className="row-title">{expense.description}</span>
-                  <span className="row-sub" style={{ display: 'block' }}>
-                    Pagó {personName(group, expense.paidBy)} · entre{' '}
-                    {expense.participants
-                      .map((id) => personName(group, id))
-                      .join(', ')}
-                  </span>
-                </span>
-                <span className="row-amount">{formatCents(expense.amountCents)}</span>
-              </button>
-              <button
-                type="button"
-                className="icon-btn"
-                aria-label={`Eliminar ${expense.description}`}
-                onClick={() => confirmRemove(expense)}
-              >
-                ×
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-    </section>
-  )
-}
-
 function describeBalance(cents: number): string {
-  if (cents > 0) return 'Le tienen que devolver'
-  if (cents < 0) return 'Tiene que pagar'
-  return 'Está saldada'
+  if (cents > 0) return 'A favor'
+  if (cents < 0) return 'Debe'
+  return 'Saldada'
 }
 
 function balanceClass(cents: number): string {

@@ -1,8 +1,12 @@
-import { useState } from 'react'
-import { validateGroupName } from '../domain/validation'
+import { useLayoutEffect, useRef, useState } from 'react'
+import { formatCents } from '../domain/money'
+import { groupTotalCents } from '../domain/mutations'
 import type { Group } from '../domain/types'
-import { Header } from './Header'
+import { validateGroupName } from '../domain/validation'
 import type { ConfirmRequest } from './ConfirmDialog'
+import { SwipeToDelete } from './SwipeToDelete'
+import { initial, tileClass } from './tiles'
+import { Topbar } from './Topbar'
 import { navigate, paths } from './useRoute'
 
 interface Props {
@@ -16,6 +20,11 @@ export function GroupsScreen({ groups, onCreate, onDelete, onConfirm }: Props) {
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useLayoutEffect(() => {
+    if (creating) inputRef.current?.focus()
+  }, [creating])
 
   const submit = () => {
     const problem = validateGroupName(name)
@@ -47,90 +56,96 @@ export function GroupsScreen({ groups, onCreate, onDelete, onConfirm }: Props) {
 
   return (
     <>
-      <Header
-        title="Grupos"
+      <Topbar
         right={
           !creating && (
-            <button type="button" className="btn-link" onClick={() => setCreating(true)}>
-              Nuevo
+            <button
+              type="button"
+              className="icon-round solid"
+              aria-label="Crear grupo"
+              onClick={() => setCreating(true)}
+            >
+              +
             </button>
           )
         }
       />
 
       <main className="content">
+        <h1 className="screen-title">
+          Grupos
+          {groups.length > 0 && (
+            <span className="sub">
+              {groups.length === 1 ? '1 grupo' : `${groups.length} grupos`}
+            </span>
+          )}
+        </h1>
+
         {creating && (
           <form
-            className="card"
+            className="form"
             onSubmit={(event) => {
               event.preventDefault()
               submit()
             }}
           >
-            <div style={{ padding: 14 }}>
-              <label className="field" style={{ marginBottom: 0 }}>
-                <span className="field-label">Nombre del grupo</span>
-                <input
-                  className="input"
-                  autoFocus
-                  value={name}
-                  placeholder="Viaje a Brasil"
-                  onChange={(event) => {
-                    setName(event.target.value)
-                    setError(null)
-                  }}
-                />
-              </label>
+            <div className="field">
+              <span className="field-label">Nombre del grupo</span>
+              <input
+                ref={inputRef}
+                className="input"
+                value={name}
+                placeholder="Viaje a Brasil"
+                enterKeyHint="done"
+                onChange={(event) => {
+                  setName(event.target.value)
+                  setError(null)
+                }}
+              />
               {error && <p className="error">{error}</p>}
-              <div className="form-actions">
-                <button type="submit" className="btn block">
-                  Crear grupo
-                </button>
-                <button type="button" className="btn secondary block" onClick={cancel}>
-                  Cancelar
-                </button>
-              </div>
+            </div>
+            <div className="form-actions">
+              <button type="submit" className="btn block">
+                Crear grupo
+              </button>
+              <button type="button" className="btn secondary block" onClick={cancel}>
+                Cancelar
+              </button>
             </div>
           </form>
         )}
 
-        {groups.length === 0 && !creating ? (
+        {groups.length === 0 && !creating && (
           <div className="card empty">
             <p>Todavía no hay grupos.</p>
             <button type="button" className="btn" onClick={() => setCreating(true)}>
               Crear el primer grupo
             </button>
           </div>
-        ) : (
-          groups.length > 0 && (
-            <div className="card">
-              {groups.map((group) => (
-                <div key={group.id} className="row">
-                  <button
-                    type="button"
-                    className="row-button tappable"
-                    onClick={() => navigate(paths.group(group.id))}
-                  >
-                    <span className="row-main">
-                      <span className="row-title">{group.name}</span>
-                      <span className="row-sub" style={{ display: 'block' }}>
-                        {describeGroup(group)}
-                      </span>
-                    </span>
-                    <span className="chevron">›</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    aria-label={`Eliminar ${group.name}`}
-                    onClick={() => confirmDelete(group)}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )
+        )}
+
+        {groups.length > 0 && (
+          <div className="cards">
+            {groups.map((group) => (
+              <SwipeToDelete key={group.id} onDelete={() => confirmDelete(group)}>
+                <button
+                  type="button"
+                  className="row tappable"
+                  onClick={() => navigate(paths.group(group.id))}
+                >
+                  <span className={`tile ${tileClass(group.id)}`}>{initial(group.name)}</span>
+                  <span className="row-main">
+                    <span className="row-title">{group.name}</span>
+                    <span className="row-sub">{describeGroup(group)}</span>
+                  </span>
+                  {group.expenses.length > 0 && (
+                    <span className="row-amount">{formatCents(groupTotalCents(group))}</span>
+                  )}
+                  <span className="chevron">›</span>
+                </button>
+              </SwipeToDelete>
+            ))}
+          </div>
         )}
       </main>
     </>

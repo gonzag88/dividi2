@@ -23,6 +23,35 @@ Pensada para usarse instalada en un iPhone desde la pantalla de inicio.
 
 No hay dependencias de red en runtime: ni fuentes, ni CDNs, ni APIs.
 
+## Diseño
+
+La interfaz sigue un sistema chico y explícito, definido como variables CSS al
+principio de `src/styles.css`:
+
+| Token | Valor | Uso |
+| --- | --- | --- |
+| `--bg` | `#f4f5ef` | fondo crema de toda la app |
+| `--surface` | `#ffffff` | tarjetas, con radio 20px y sombra suave, sin bordes |
+| `--pine` | `#14453b` | color principal: botones, hero, chips activos |
+| `--mint` … `--sky` | pasteles | tiles de color de grupos, gastos y personas |
+
+Reglas que conviene respetar al tocar la UI:
+
+- **Nada de bordes en las tarjetas**: separan por sombra y por espacio.
+- **Los números son el protagonista**: bold, tracking negativo y
+  `font-variant-numeric: tabular-nums` para que no bailen al cambiar.
+- **Los tiles de color se derivan del id** (`src/ui/tiles.ts`), así una persona o
+  un grupo siempre tiene el mismo color.
+- **Un solo botón flotante** por pantalla, centrado. No hay barra de tabs: la app
+  tiene dos pantallas reales y no habría a dónde navegar.
+- **Deslizar a la izquierda para eliminar** en las tarjetas de grupo y de gasto
+  (`src/ui/SwipeToDelete.tsx`, con pointer events, sin librerías).
+
+La tipografía es **Plus Jakarta Sans**, servida desde el propio repo
+(`src/fonts/`, sólo el subset latino, 27 KB). No se pide a ningún CDN, así que la
+app sigue viéndose igual sin conexión. El Service Worker la precachea junto con
+el resto de los assets.
+
 ## Desarrollo
 
 Requiere Node 20 o superior.

@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { computeBalances, isSettled } from './balances'
 import { expense, group } from './fixtures'
-import { addExpense, removeExpense, removePerson, updateExpense } from './mutations'
+import {
+  addExpense,
+  groupTotalCents,
+  removeExpense,
+  removePerson,
+  updateExpense,
+} from './mutations'
 
 const cents = (balances: ReturnType<typeof computeBalances>) =>
   Object.fromEntries(balances.map((balance) => [balance.name, balance.cents]))
@@ -93,6 +99,18 @@ describe('computeBalances', () => {
     )
     const total = computeBalances(g).reduce((sum, balance) => sum + balance.cents, 0)
     expect(total).toBe(0)
+  })
+
+  it('el total del grupo es la suma exacta de los gastos', () => {
+    const g = group(
+      ['A', 'B'],
+      [
+        expense('e1', 9_000_000, 'p1', ['p1', 'p2'], 1),
+        expense('e2', 3_500_050, 'p2', ['p1', 'p2'], 2),
+      ],
+    )
+    expect(groupTotalCents(g)).toBe(12_500_050)
+    expect(groupTotalCents(group(['A', 'B']))).toBe(0)
   })
 
   it('un grupo sin gastos está saldado', () => {

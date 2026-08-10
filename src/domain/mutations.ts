@@ -75,6 +75,11 @@ export function personName(group: Group, personId: string): string {
   return findPerson(group, personId)?.name ?? '—'
 }
 
+/** Suma de todos los gastos del grupo, en centavos. */
+export function groupTotalCents(group: Group): number {
+  return group.expenses.reduce((total, expense) => total + expense.amountCents, 0)
+}
+
 /** Hacen falta al menos 2 integrantes para poder cargar un gasto. */
 export function canAddExpenses(group: Group): boolean {
   return group.people.length >= 2

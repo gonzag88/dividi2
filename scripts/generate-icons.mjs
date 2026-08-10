@@ -1,6 +1,6 @@
 /**
  * Genera los íconos de la PWA sin depender de librerías de imágenes.
- * Dibuja el signo ÷ en blanco sobre fondo azul y escribe PNGs a mano.
+ * Dibuja el signo ÷ en blanco sobre fondo verde pino y escribe PNGs a mano.
  *
  *   npm run icons
  */
@@ -9,7 +9,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const BG = [0x25, 0x63, 0xeb]
+const BG = [0x14, 0x45, 0x3b]
 const FG = [0xff, 0xff, 0xff]
 
 const publicDir = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'public')
@@ -111,7 +111,7 @@ function makeIcon(size, glyphRatio) {
 }
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#2563eb"/>
+  <rect width="64" height="64" rx="14" fill="#14453b"/>
   <rect x="14" y="30" width="36" height="4.5" rx="2.25" fill="#fff"/>
   <circle cx="32" cy="21.5" r="4.2" fill="#fff"/>
   <circle cx="32" cy="42.5" r="4.2" fill="#fff"/>

@@ -4,7 +4,7 @@ import { addExpense, removeExpense, updateExpense } from '../domain/mutations'
 import type { Group } from '../domain/types'
 import { validateExpense, type ExpenseErrors } from '../domain/validation'
 import type { ConfirmRequest } from './ConfirmDialog'
-import { BackButton, Header } from './Header'
+import { BackButton, Topbar } from './Topbar'
 import { goBack, paths } from './useRoute'
 
 interface Props {
@@ -54,9 +54,7 @@ export function ExpenseScreen({ group, expenseId, onSave, onConfirm }: Props) {
       return
     }
     onSave(
-      existing
-        ? updateExpense(group, existing.id, result.input)
-        : addExpense(group, result.input),
+      existing ? updateExpense(group, existing.id, result.input) : addExpense(group, result.input),
     )
     back()
   }
@@ -65,7 +63,8 @@ export function ExpenseScreen({ group, expenseId, onSave, onConfirm }: Props) {
     if (!existing) return
     onConfirm({
       title: `Eliminar "${existing.description}"`,
-      message: 'Se va a eliminar el gasto y se van a recalcular los balances. Esta acción no se puede deshacer.',
+      message:
+        'Se va a eliminar el gasto y se van a recalcular los balances. Esta acción no se puede deshacer.',
       confirmLabel: 'Eliminar gasto',
       onConfirm: () => {
         onSave(removeExpense(group, existing.id))
@@ -76,61 +75,65 @@ export function ExpenseScreen({ group, expenseId, onSave, onConfirm }: Props) {
 
   return (
     <>
-      <Header
-        title={existing ? 'Editar gasto' : 'Nuevo gasto'}
-        left={<BackButton label="Cancelar" onClick={back} />}
-      />
+      <Topbar left={<BackButton label="Cancelar" onClick={back} />} />
 
       <main className="content">
+        <h1 className="screen-title">{existing ? 'Editar gasto' : 'Nuevo gasto'}</h1>
+
         <form
+          className="form"
           onSubmit={(event) => {
             event.preventDefault()
             submit()
           }}
         >
           <div className="field">
-            <label>
-              <span className="field-label">Descripción</span>
-              <input
-                className="input"
-                value={description}
-                placeholder="Cena"
-                autoFocus={!existing}
-                onChange={(event) => {
-                  setDescription(event.target.value)
-                  setErrors((current) => ({ ...current, description: undefined }))
-                }}
-              />
+            <label className="field-label" htmlFor="expense-description">
+              Descripción
             </label>
+            <input
+              id="expense-description"
+              className="input"
+              value={description}
+              placeholder="Cena"
+              autoFocus={!existing}
+              enterKeyHint="next"
+              onChange={(event) => {
+                setDescription(event.target.value)
+                setErrors((current) => ({ ...current, description: undefined }))
+              }}
+            />
             {errors.description && <p className="error">{errors.description}</p>}
           </div>
 
           <div className="field">
-            <label>
-              <span className="field-label">Monto</span>
-              <input
-                className="input"
-                value={amount}
-                placeholder="0"
-                inputMode="decimal"
-                autoComplete="off"
-                onChange={(event) => {
-                  setAmount(event.target.value)
-                  setErrors((current) => ({ ...current, amount: undefined }))
-                }}
-              />
+            <label className="field-label" htmlFor="expense-amount">
+              Monto
             </label>
+            <input
+              id="expense-amount"
+              className="input amount"
+              value={amount}
+              placeholder="0"
+              inputMode="decimal"
+              autoComplete="off"
+              enterKeyHint="done"
+              onChange={(event) => {
+                setAmount(event.target.value)
+                setErrors((current) => ({ ...current, amount: undefined }))
+              }}
+            />
             {errors.amount && <p className="error">{errors.amount}</p>}
           </div>
 
           <div className="field">
             <span className="field-label">Quién pagó</span>
-            <div className="card" role="radiogroup" aria-label="Quién pagó">
+            <div className="chips" role="radiogroup" aria-label="Quién pagó">
               {group.people.map((person) => (
                 <button
                   key={person.id}
                   type="button"
-                  className="check-row"
+                  className="chip"
                   role="radio"
                   aria-checked={paidBy === person.id}
                   onClick={() => {
@@ -138,10 +141,7 @@ export function ExpenseScreen({ group, expenseId, onSave, onConfirm }: Props) {
                     setErrors((current) => ({ ...current, paidBy: undefined }))
                   }}
                 >
-                  <span className="check-box">✓</span>
-                  <span className="row-main">
-                    <span className="row-title">{person.name}</span>
-                  </span>
+                  <span>{person.name}</span>
                 </button>
               ))}
             </div>
@@ -151,28 +151,25 @@ export function ExpenseScreen({ group, expenseId, onSave, onConfirm }: Props) {
           <div className="field">
             <div className="section-head">
               <span className="field-label">Dividido entre</span>
-              <button type="button" className="btn-link small" onClick={toggleAll}>
-                {allSelected ? 'Destildar todos' : 'Tildar todos'}
+              <button type="button" className="btn-link" onClick={toggleAll}>
+                {allSelected ? 'Ninguno' : 'Todos'}
               </button>
             </div>
-            <div className="card" role="group" aria-label="Dividido entre">
+            <div className="chips" role="group" aria-label="Dividido entre">
               {group.people.map((person) => (
                 <button
                   key={person.id}
                   type="button"
-                  className="check-row"
+                  className="chip"
                   role="checkbox"
                   aria-checked={participants.includes(person.id)}
                   onClick={() => toggle(person.id)}
                 >
-                  <span className="check-box square">✓</span>
-                  <span className="row-main">
-                    <span className="row-title">{person.name}</span>
-                  </span>
+                  <span>{person.name}</span>
                 </button>
               ))}
             </div>
-            <p className="row-sub" style={{ marginTop: 6 }}>
+            <p className="stat-note">
               {participants.length === 1
                 ? `Le corresponde entero a ${
                     group.people.find((person) => person.id === participants[0])?.name ?? '—'
@@ -187,12 +184,7 @@ export function ExpenseScreen({ group, expenseId, onSave, onConfirm }: Props) {
               Guardar
             </button>
             {existing && (
-              <button
-                type="button"
-                className="btn secondary block"
-                style={{ color: 'var(--danger)' }}
-                onClick={confirmDelete}
-              >
+              <button type="button" className="btn danger-text block" onClick={confirmDelete}>
                 Eliminar gasto
               </button>
             )}

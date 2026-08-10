@@ -27,7 +27,7 @@ export function ConfirmDialog({ request, onCancel }: Props) {
         <div className="dialog-actions">
           <button
             type="button"
-            className="btn danger"
+            className="btn destructive"
             onClick={() => {
               request.onConfirm()
               onCancel()

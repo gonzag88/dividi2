@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { buildReport } from '../domain/report'
 import type { Group } from '../domain/types'
-import { BackButton, Header } from './Header'
+import { BackButton, Topbar } from './Topbar'
 import { goBack, paths } from './useRoute'
 
 /**
@@ -25,12 +25,18 @@ export function ReportScreen({ group }: { group: Group }) {
 
   return (
     <>
-      <Header
-        title="Reporte"
-        left={<BackButton label={group.name} onClick={() => goBack(paths.group(group.id))} />}
+      <Topbar
+        left={<BackButton label={`Volver a ${group.name}`} onClick={() => goBack(paths.group(group.id))} />}
       />
+
       <main className="content">
+        <h1 className="screen-title">
+          Reporte
+          <span className="sub">Para pegar en WhatsApp o Telegram</span>
+        </h1>
+
         <textarea className="report" readOnly value={report} onFocus={(e) => e.target.select()} />
+
         <button type="button" className="btn block" onClick={copy}>
           {copied ? '¡Copiado!' : 'Copiar reporte'}
         </button>
