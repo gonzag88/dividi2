@@ -169,7 +169,7 @@ export function ExpenseScreen({ group, expenseId, onSave, onConfirm }: Props) {
                 </button>
               ))}
             </div>
-            <p className="stat-note">
+            <p className="hint">
               {participants.length === 1
                 ? `Le corresponde entero a ${
                     group.people.find((person) => person.id === participants[0])?.name ?? '—'

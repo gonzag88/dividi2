@@ -18,6 +18,7 @@ import type { ConfirmRequest } from './ConfirmDialog'
 import { SwipeToDelete } from './SwipeToDelete'
 import { initial, tileClass } from './tiles'
 import { BackButton, Topbar } from './Topbar'
+import { PlusIcon } from './icons'
 import { goBack, navigate, paths } from './useRoute'
 
 interface Props {
@@ -86,7 +87,7 @@ export function GroupScreen({ group, onSave, onConfirm }: Props) {
           aria-label="Agregar gasto"
           onClick={() => navigate(paths.newExpense(group.id))}
         >
-          +
+          <PlusIcon size={26} />
         </button>
       )}
     </>
@@ -99,14 +100,17 @@ function BalancesSection({ group }: { group: Group }) {
   return (
     <section className="section">
       <h2 className="section-title">Balances</h2>
-      <div className="stat-grid">
+      <div className="card">
         {balances.map((balance) => (
-          <div key={balance.personId} className="stat">
-            <div className="stat-name">{balance.name}</div>
-            <div className={`stat-amount ${balanceClass(balance.cents)}`}>
-              {formatSignedCents(balance.cents)}
+          <div key={balance.personId} className="row">
+            <span className={`tile ${tileClass(balance.personId)}`}>{initial(balance.name)}</span>
+            <div className="row-main">
+              <span className="row-title">{balance.name}</span>
+              <span className="row-sub">{describeBalance(balance.cents)}</span>
             </div>
-            <div className="stat-note">{describeBalance(balance.cents)}</div>
+            <span className={`row-amount ${balanceClass(balance.cents)}`}>
+              {formatSignedCents(balance.cents)}
+            </span>
           </div>
         ))}
       </div>
@@ -304,7 +308,9 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
               submit()
             }}
           >
-            <span className="tile tile-mint">+</span>
+            <span className="tile tile-mint">
+              <PlusIcon size={18} />
+            </span>
             <input
               ref={inputRef}
               className="row-input"

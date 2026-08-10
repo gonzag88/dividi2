@@ -326,43 +326,11 @@ button {
   background: var(--sky);
 }
 
-/* ---------- grilla de balances ---------- */
-
-.stat-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.stat {
-  background: var(--surface);
-  border-radius: var(--r-card);
-  box-shadow: var(--shadow);
-  padding: 14px 16px;
-  min-width: 0;
-}
-
-.stat-name {
+/* Texto de ayuda debajo de un campo. */
+.hint {
+  margin: 0;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.stat-amount {
-  margin-top: 6px;
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-note {
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--muted);
 }
 
@@ -530,9 +498,6 @@ button {
   border-radius: 50%;
   background: var(--pine);
   color: #fff;
-  font-size: 30px;
-  font-weight: 400;
-  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;

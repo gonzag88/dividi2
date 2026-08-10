@@ -7,6 +7,7 @@ import type { ConfirmRequest } from './ConfirmDialog'
 import { SwipeToDelete } from './SwipeToDelete'
 import { initial, tileClass } from './tiles'
 import { Topbar } from './Topbar'
+import { PlusIcon } from './icons'
 import { navigate, paths } from './useRoute'
 
 interface Props {
@@ -65,7 +66,7 @@ export function GroupsScreen({ groups, onCreate, onDelete, onConfirm }: Props) {
               aria-label="Crear grupo"
               onClick={() => setCreating(true)}
             >
-              +
+              <PlusIcon />
             </button>
           )
         }
