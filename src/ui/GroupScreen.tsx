@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { computeBalances, isSettled } from '../domain/balances'
 import { simplifyDebts } from '../domain/debts'
 import { formatCents, formatSignedCents } from '../domain/money'
@@ -124,8 +124,30 @@ function DebtsSection({ group }: { group: Group }) {
 }
 
 function PeopleSection({ group, onSave, onConfirm }: Props) {
+  const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // useLayoutEffect y no useEffect: iOS sólo abre el teclado si el foco ocurre
+  // dentro del gesto que lo disparó, y los efectos de layout corren antes de
+  // que termine el click.
+  useLayoutEffect(() => {
+    if (adding) inputRef.current?.focus()
+  }, [adding])
+
+  const open = () => {
+    setName('')
+    setError(null)
+    setAdding(true)
+  }
+
+  /** Al salir del campo se descarta lo que haya escrito sin confirmar. */
+  const close = () => {
+    setAdding(false)
+    setName('')
+    setError(null)
+  }
 
   const submit = () => {
     const problem = validatePersonName(name)
@@ -134,6 +156,7 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
       return
     }
     onSave(addPerson(group, name))
+    // La fila queda abierta para seguir cargando gente de corrido.
     setName('')
     setError(null)
   }
@@ -155,57 +178,64 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
 
   return (
     <section>
-      <h2 className="section-title">Integrantes</h2>
+      <div className="section-head">
+        <h2 className="section-title">Integrantes</h2>
+        <button type="button" className="btn-link small" onClick={open}>
+          + Agregar
+        </button>
+      </div>
+
       <div className="card">
-        {group.people.length === 0 ? (
+        {group.people.length === 0 && !adding && (
           <div className="empty">
             <p>Todavía no hay integrantes en este grupo.</p>
           </div>
-        ) : (
-          group.people.map((person) => (
-            <div key={person.id} className="row">
-              <div className="row-main">
-                <div className="row-title">{person.name}</div>
-              </div>
-              <button
-                type="button"
-                className="icon-btn"
-                aria-label={`Eliminar a ${person.name}`}
-                onClick={() => confirmRemove(person)}
-              >
-                ×
-              </button>
-            </div>
-          ))
         )}
 
-        <form
-          className="inline-form"
-          onSubmit={(event) => {
-            event.preventDefault()
-            submit()
-          }}
-        >
-          <input
-            className="input"
-            value={name}
-            placeholder="Agregar persona"
-            aria-label="Nombre de la persona"
-            onChange={(event) => {
-              setName(event.target.value)
-              setError(null)
+        {group.people.map((person) => (
+          <div key={person.id} className="row">
+            <div className="row-main">
+              <div className="row-title">{person.name}</div>
+            </div>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label={`Eliminar a ${person.name}`}
+              onClick={() => confirmRemove(person)}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+
+        {adding && (
+          <form
+            className="row"
+            onSubmit={(event) => {
+              event.preventDefault()
+              submit()
             }}
-          />
-          <button type="submit" className="btn">
-            Agregar
-          </button>
-        </form>
-        {error && (
-          <p className="error" style={{ padding: '0 14px 12px' }}>
-            {error}
-          </p>
+          >
+            <input
+              ref={inputRef}
+              className="row-input"
+              value={name}
+              placeholder="Nombre"
+              aria-label="Nombre de la persona"
+              autoComplete="off"
+              autoCorrect="off"
+              enterKeyHint="done"
+              onBlur={close}
+              onChange={(event) => {
+                setName(event.target.value)
+                setError(null)
+              }}
+            />
+          </form>
         )}
       </div>
+
+      {error && <p className="error">{error}</p>}
     </section>
   )
 }

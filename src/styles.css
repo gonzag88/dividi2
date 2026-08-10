@@ -357,15 +357,20 @@ button {
   font-size: 14px;
 }
 
-.inline-form {
-  display: flex;
-  gap: 8px;
-  padding: 10px 14px;
-  border-top: 1px solid var(--border);
+/* Input que vive como una fila más de la lista, sin marco propio. */
+.row-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  /* 16px o más para que iOS no haga zoom al enfocar. */
+  font-size: 17px;
 }
 
-.inline-form .input {
-  flex: 1;
+.row-input:focus {
+  outline: none;
 }
 
 .check-row {
