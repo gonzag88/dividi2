@@ -12,6 +12,7 @@ import {
   removePerson,
   sortedExpenses,
 } from '../domain/mutations'
+import { describeParticipants } from '../domain/participants'
 import type { Expense, Group, Person } from '../domain/types'
 import { validatePersonName } from '../domain/validation'
 import type { ConfirmRequest } from './ConfirmDialog'
@@ -202,8 +203,8 @@ function ExpensesSection({
                 <span className="row-main">
                   <span className="row-title">{expense.description}</span>
                   <span className="row-sub">
-                    Pagó {personName(group, expense.paidBy)} · entre{' '}
-                    {expense.participants.length}
+                    Pagó {personName(group, expense.paidBy)} ·{' '}
+                    {describeParticipants(expense, group.people)}
                   </span>
                 </span>
                 <span className="row-amount">{formatCents(expense.amountCents)}</span>
