@@ -32,9 +32,9 @@ describe('buildReport', () => {
         'Nico → Gonzalo: $10.000',
         '',
         '*GASTOS*',
-        'Taxi: $10.000 · Juan',
-        'Supermercado: $35.000 · Nico',
-        'Cena: $90.000 · Gonzalo',
+        'Taxi: $10.000 · Juan (todos)',
+        'Supermercado: $35.000 · Nico (todos)',
+        'Cena: $90.000 · Gonzalo (todos)',
       ].join('\n'),
     )
   })
@@ -43,6 +43,21 @@ describe('buildReport', () => {
     const g = group(['A', 'B'], [expense('e1', 1000, 'p1', ['p1', 'p2'])])
     const saldado = { ...g, expenses: [...g.expenses, expense('e2', 1000, 'p2', ['p1', 'p2'], 2)] }
     expect(buildReport(saldado)).toContain('*DEUDAS*\nEstá todo saldado.')
+  })
+
+  it('aclara entre quiénes se divide cada gasto', () => {
+    const g = group(
+      ['Gonzalo', 'Nico', 'Juan'],
+      [
+        expense('e1', 9000, 'p1', ['p1', 'p2', 'p3'], 3, 'Cena'),
+        expense('e2', 6000, 'p1', ['p1', 'p2'], 2, 'Taxi'),
+        expense('e3', 3000, 'p2', ['p3'], 1, 'Café'),
+      ],
+    )
+    const lines = buildReport(g).split('\n')
+    expect(lines).toContain('Cena: $90 · Gonzalo (todos)')
+    expect(lines).toContain('Taxi: $60 · Gonzalo (todos menos Juan)')
+    expect(lines).toContain('Café: $30 · Nico (solo Juan)')
   })
 
   it('resuelve los estados vacíos', () => {

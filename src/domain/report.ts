@@ -2,6 +2,7 @@ import { computeBalances, isSettled } from './balances'
 import { simplifyDebts } from './debts'
 import { formatCents, formatSignedCents } from './money'
 import { personName, sortedExpenses } from './mutations'
+import { describeParticipants } from './participants'
 import type { Group } from './types'
 
 /**
@@ -41,7 +42,10 @@ export function buildReport(group: Group): string {
   } else {
     for (const expense of expenses) {
       lines.push(
-        `${expense.description}: ${formatCents(expense.amountCents)} · ${personName(group, expense.paidBy)}`,
+        `${expense.description}: ${formatCents(expense.amountCents)} · ${personName(
+          group,
+          expense.paidBy,
+        )} (${describeParticipants(expense, group.people)})`,
       )
     }
   }
