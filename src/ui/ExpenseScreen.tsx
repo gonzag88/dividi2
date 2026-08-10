@@ -173,8 +173,11 @@ export function ExpenseScreen({ group, expenseId, onSave, onConfirm }: Props) {
               ))}
             </div>
             <p className="row-sub" style={{ marginTop: 6 }}>
-              Se divide en partes iguales entre {participants.length}{' '}
-              {participants.length === 1 ? 'persona' : 'personas'}.
+              {participants.length === 1
+                ? `Le corresponde entero a ${
+                    group.people.find((person) => person.id === participants[0])?.name ?? '—'
+                  }.`
+                : `Se divide en partes iguales entre ${participants.length} personas.`}
             </p>
             {errors.participants && <p className="error">{errors.participants}</p>}
           </div>

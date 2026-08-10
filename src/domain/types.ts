@@ -10,7 +10,7 @@ export interface Expense {
   amountCents: number
   /** id de la persona que pagó. */
   paidBy: string
-  /** ids de las personas entre las que se divide (mínimo 2). */
+  /** ids de las personas entre las que se divide (mínimo 1). */
   participants: string[]
   /** Sólo se usa para ordenar de más reciente a más antiguo. */
   createdAt: number

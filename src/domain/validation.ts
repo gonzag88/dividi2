@@ -53,8 +53,10 @@ export function validateExpense(raw: RawExpense, group: Group): ExpenseValidatio
   const participants = raw.participants.filter((id, index) => raw.participants.indexOf(id) === index)
   if (participants.some((id) => !ids.has(id))) {
     errors.participants = 'Hay participantes que ya no existen en el grupo.'
-  } else if (participants.length < 2) {
-    errors.participants = 'El gasto tiene que dividirse entre al menos 2 personas.'
+  } else if (participants.length < 1) {
+    // Un gasto puede dividirse entre una sola persona: por ejemplo, paga Juan
+    // y le corresponde entero a María.
+    errors.participants = 'Elegí entre quiénes se divide el gasto.'
   }
 
   if (Object.keys(errors).length > 0) return { ok: false, errors }

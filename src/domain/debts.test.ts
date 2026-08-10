@@ -71,6 +71,11 @@ describe('simplifyDebts', () => {
     expect(result.length).toBeLessThanOrEqual(4)
   })
 
+  it('un gasto cargado a una sola persona genera una sola transferencia', () => {
+    const g = group(['Juan', 'María'], [expense('e1', 10000, 'p1', ['p2'])])
+    expect(asText(simplifyDebts(computeBalances(g)))).toEqual(['María→Juan:10000'])
+  })
+
   it('grupo completamente saldado', () => {
     expect(
       simplifyDebts(

@@ -259,6 +259,32 @@ button {
   width: 100%;
 }
 
+/* Botón flotante de agregar gasto: siempre visible sobre el contenido. */
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 20;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 24px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.fab:active {
+  background: #1d4fd7;
+}
+
+/* Deja lugar para que el botón flotante no tape la última fila. */
+.content.has-fab {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+}
+
 .btn-link {
   background: none;
   border: 0;

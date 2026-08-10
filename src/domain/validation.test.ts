@@ -86,13 +86,22 @@ describe('validateExpense', () => {
     expect(!result.ok && result.errors.paidBy).toBe('Elegí quién pagó.')
   })
 
-  it('rechaza menos de 2 participantes', () => {
-    const result = validateExpense({ ...valid, participants: ['p1'] }, g)
+  it('acepta un gasto dividido entre una sola persona', () => {
+    // Paga Juan (p3) y le corresponde entero a Nico (p2).
+    const result = validateExpense({ ...valid, paidBy: 'p3', participants: ['p2'] }, g)
+    expect(result.ok && result.input.participants).toEqual(['p2'])
+  })
+
+  it('acepta que quien pagó sea el único participante', () => {
+    const result = validateExpense({ ...valid, paidBy: 'p1', participants: ['p1'] }, g)
+    expect(result.ok).toBe(true)
+  })
+
+  it('rechaza que no haya ningún participante', () => {
+    const result = validateExpense({ ...valid, participants: [] }, g)
     expect(!result.ok && result.errors.participants).toBe(
-      'El gasto tiene que dividirse entre al menos 2 personas.',
+      'Elegí entre quiénes se divide el gasto.',
     )
-    const empty = validateExpense({ ...valid, participants: [] }, g)
-    expect(empty.ok).toBe(false)
   })
 
   it('rechaza participantes inexistentes', () => {

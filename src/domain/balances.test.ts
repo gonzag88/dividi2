@@ -66,6 +66,17 @@ describe('computeBalances', () => {
     })
   })
 
+  it('un gasto dividido entre una sola persona se le carga entero', () => {
+    // Paga Juan y le corresponde entero a María.
+    const g = group(['Juan', 'María'], [expense('e1', 10000, 'p1', ['p2'])])
+    expect(cents(computeBalances(g))).toEqual({ Juan: 10000, María: -10000 })
+  })
+
+  it('un gasto donde quien paga es el único participante no mueve ningún balance', () => {
+    const g = group(['Juan', 'María'], [expense('e1', 10000, 'p1', ['p1'])])
+    expect(cents(computeBalances(g))).toEqual({ Juan: 0, María: 0 })
+  })
+
   it('una persona que no participa de ningún gasto queda saldada', () => {
     const g = group(['Gonzalo', 'Nico', 'Juan'], [expense('e1', 10000, 'p1', ['p1', 'p2'])])
     expect(cents(computeBalances(g)).Juan).toBe(0)

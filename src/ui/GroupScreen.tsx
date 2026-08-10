@@ -41,9 +41,7 @@ export function GroupScreen({ group, onSave, onConfirm }: Props) {
         }
       />
 
-      <main className="content">
-        <PeopleSection group={group} onSave={onSave} onConfirm={onConfirm} />
-
+      <main className={`content${canAddExpenses(group) ? ' has-fab' : ''}`}>
         <section>
           <h2 className="section-title">Balances</h2>
           <div className="card">
@@ -90,7 +88,20 @@ export function GroupScreen({ group, onSave, onConfirm }: Props) {
         </section>
 
         <ExpensesSection group={group} expenses={expenses} onSave={onSave} onConfirm={onConfirm} />
+
+        {/* Los integrantes van al final: se tocan mucho menos que los saldos. */}
+        <PeopleSection group={group} onSave={onSave} onConfirm={onConfirm} />
       </main>
+
+      {canAddExpenses(group) && (
+        <button
+          type="button"
+          className="fab"
+          onClick={() => navigate(paths.newExpense(group.id))}
+        >
+          + Gasto
+        </button>
+      )}
     </>
   )
 }
@@ -201,18 +212,8 @@ function ExpensesSection({
 
   return (
     <section>
-      <div className="section-head">
-        <h2 className="section-title">Gastos</h2>
-        {enabled && expenses.length > 0 && (
-          <button
-            type="button"
-            className="btn-link small"
-            onClick={() => navigate(paths.newExpense(group.id))}
-          >
-            Agregar gasto
-          </button>
-        )}
-      </div>
+      {/* No hay acción acá: el botón flotante está siempre a mano. */}
+      <h2 className="section-title">Gastos</h2>
 
       <div className="card">
         {!enabled ? (
