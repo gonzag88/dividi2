@@ -24,10 +24,7 @@ interface Props {
 }
 
 export function GroupScreen({ group, onSave, onConfirm }: Props) {
-  const balances = computeBalances(group)
-  const debts = simplifyDebts(balances)
-  const expenses = sortedExpenses(group)
-  const settled = isSettled(balances)
+  const hasPeople = group.people.length > 0
 
   return (
     <>
@@ -42,52 +39,20 @@ export function GroupScreen({ group, onSave, onConfirm }: Props) {
       />
 
       <main className={`content${canAddExpenses(group) ? ' has-fab' : ''}`}>
-        <section>
-          <h2 className="section-title">Balances</h2>
-          <div className="card">
-            {balances.length === 0 ? (
-              <div className="empty">
-                <p>Agregá integrantes para ver los balances.</p>
-              </div>
-            ) : (
-              balances.map((balance) => (
-                <div key={balance.personId} className="row">
-                  <div className="row-main">
-                    <div className="row-title">{balance.name}</div>
-                    <div className="row-sub">{describeBalance(balance.cents)}</div>
-                  </div>
-                  <span className={`row-amount ${balanceClass(balance.cents)}`}>
-                    {formatSignedCents(balance.cents)}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="section-title">Deudas</h2>
-          <div className="card">
-            {settled || debts.length === 0 ? (
-              <div className="empty">
-                <p>Está todo saldado.</p>
-              </div>
-            ) : (
-              debts.map((debt, index) => (
-                <div key={`${debt.fromId}-${debt.toId}-${index}`} className="row">
-                  <div className="row-main">
-                    <div className="row-title">
-                      {debt.fromName} → {debt.toName}
-                    </div>
-                  </div>
-                  <span className="row-amount">{formatCents(debt.cents)}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-
-        <ExpensesSection group={group} expenses={expenses} onSave={onSave} onConfirm={onConfirm} />
+        {/* En un grupo recién creado lo único accionable es sumar gente: no
+            tiene sentido mostrar tres tarjetas vacías arriba de todo. */}
+        {hasPeople && (
+          <>
+            <BalancesSection group={group} />
+            <DebtsSection group={group} />
+            <ExpensesSection
+              group={group}
+              expenses={sortedExpenses(group)}
+              onSave={onSave}
+              onConfirm={onConfirm}
+            />
+          </>
+        )}
 
         {/* Los integrantes van al final: se tocan mucho menos que los saldos. */}
         <PeopleSection group={group} onSave={onSave} onConfirm={onConfirm} />
@@ -103,6 +68,58 @@ export function GroupScreen({ group, onSave, onConfirm }: Props) {
         </button>
       )}
     </>
+  )
+}
+
+function BalancesSection({ group }: { group: Group }) {
+  const balances = computeBalances(group)
+
+  return (
+    <section>
+      <h2 className="section-title">Balances</h2>
+      <div className="card">
+        {balances.map((balance) => (
+          <div key={balance.personId} className="row">
+            <div className="row-main">
+              <div className="row-title">{balance.name}</div>
+              <div className="row-sub">{describeBalance(balance.cents)}</div>
+            </div>
+            <span className={`row-amount ${balanceClass(balance.cents)}`}>
+              {formatSignedCents(balance.cents)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function DebtsSection({ group }: { group: Group }) {
+  const balances = computeBalances(group)
+  const debts = simplifyDebts(balances)
+
+  return (
+    <section>
+      <h2 className="section-title">Deudas</h2>
+      <div className="card">
+        {isSettled(balances) || debts.length === 0 ? (
+          <div className="empty">
+            <p>Está todo saldado.</p>
+          </div>
+        ) : (
+          debts.map((debt, index) => (
+            <div key={`${debt.fromId}-${debt.toId}-${index}`} className="row">
+              <div className="row-main">
+                <div className="row-title">
+                  {debt.fromName} → {debt.toName}
+                </div>
+              </div>
+              <span className="row-amount">{formatCents(debt.cents)}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
   )
 }
 
