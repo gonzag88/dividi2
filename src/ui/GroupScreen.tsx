@@ -18,7 +18,7 @@ import type { ConfirmRequest } from './ConfirmDialog'
 import { SwipeToDelete } from './SwipeToDelete'
 import { initial, tileClass } from './tiles'
 import { BackButton, Topbar } from './Topbar'
-import { PlusIcon } from './icons'
+import { PlusIcon, ReceiptIcon } from './icons'
 import { goBack, navigate, paths } from './useRoute'
 
 interface Props {
@@ -194,8 +194,10 @@ function ExpensesSection({
                 className="row tappable"
                 onClick={() => navigate(paths.expense(group.id, expense.id))}
               >
-                <span className={`tile ${tileClass(expense.id)}`}>
-                  {initial(expense.description)}
+                {/* Todos los gastos comparten el mismo icono y el mismo color:
+                    la inicial de la descripción no aportaba información. */}
+                <span className="tile tile-expense">
+                  <ReceiptIcon />
                 </span>
                 <span className="row-main">
                   <span className="row-title">{expense.description}</span>

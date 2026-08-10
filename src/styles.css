@@ -326,6 +326,12 @@ button {
   background: var(--sky);
 }
 
+/* Tile fijo de los gastos: mismo icono y mismo color para todos. */
+.tile-expense {
+  background: var(--mint);
+  color: var(--pine);
+}
+
 /* Texto de ayuda debajo de un campo. */
 .hint {
   margin: 0;
