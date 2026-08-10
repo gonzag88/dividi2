@@ -88,36 +88,40 @@ export function ExpenseScreen({ group, expenseId, onSave, onConfirm }: Props) {
             submit()
           }}
         >
-          <label className="field">
-            <span className="field-label">Descripción</span>
-            <input
-              className="input"
-              value={description}
-              placeholder="Cena"
-              autoFocus={!existing}
-              onChange={(event) => {
-                setDescription(event.target.value)
-                setErrors((current) => ({ ...current, description: undefined }))
-              }}
-            />
+          <div className="field">
+            <label>
+              <span className="field-label">Descripción</span>
+              <input
+                className="input"
+                value={description}
+                placeholder="Cena"
+                autoFocus={!existing}
+                onChange={(event) => {
+                  setDescription(event.target.value)
+                  setErrors((current) => ({ ...current, description: undefined }))
+                }}
+              />
+            </label>
             {errors.description && <p className="error">{errors.description}</p>}
-          </label>
+          </div>
 
-          <label className="field">
-            <span className="field-label">Monto</span>
-            <input
-              className="input"
-              value={amount}
-              placeholder="0"
-              inputMode="decimal"
-              autoComplete="off"
-              onChange={(event) => {
-                setAmount(event.target.value)
-                setErrors((current) => ({ ...current, amount: undefined }))
-              }}
-            />
+          <div className="field">
+            <label>
+              <span className="field-label">Monto</span>
+              <input
+                className="input"
+                value={amount}
+                placeholder="0"
+                inputMode="decimal"
+                autoComplete="off"
+                onChange={(event) => {
+                  setAmount(event.target.value)
+                  setErrors((current) => ({ ...current, amount: undefined }))
+                }}
+              />
+            </label>
             {errors.amount && <p className="error">{errors.amount}</p>}
-          </label>
+          </div>
 
           <div className="field">
             <span className="field-label">Quién pagó</span>
