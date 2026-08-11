@@ -148,6 +148,9 @@ export function GroupsScreen({ groups, onCreate, onDelete, onConfirm }: Props) {
             ))}
           </div>
         )}
+
+        {/* Sello del build: sirve para saber si el dispositivo ya tomó la última versión. */}
+        <p className="build-version">v{__BUILD_VERSION__}</p>
       </main>
     </>
   )
