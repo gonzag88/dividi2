@@ -1,7 +1,7 @@
 import { computeBalances, isSettled } from './balances'
 import { simplifyDebts } from './debts'
 import { formatCents, formatSignedCents } from './money'
-import { personName, sortedExpenses } from './mutations'
+import { findPerson, personName, sortedExpenses } from './mutations'
 import { describeParticipants } from './participants'
 import type { Group } from './types'
 
@@ -31,7 +31,12 @@ export function buildReport(group: Group): string {
     lines.push('Está todo saldado.')
   } else {
     for (const debt of debts) {
-      lines.push(`${debt.fromName} → ${debt.toName}: ${formatCents(debt.cents)}`)
+      // El alias va junto al que cobra: es la única línea donde hace falta
+      // saber a dónde transferir. Si no lo tiene cargado, no se nota.
+      const alias = findPerson(group, debt.toId)?.alias
+      lines.push(
+        `${debt.fromName} → ${debt.toName}: ${formatCents(debt.cents)}${alias ? ` (${alias})` : ''}`,
+      )
     }
   }
   lines.push('')

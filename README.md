@@ -9,7 +9,8 @@ Pensada para usarse instalada en un iPhone desde la pantalla de inicio.
 
 - **Grupos** → cada grupo tiene sus integrantes y sus gastos.
 - **Agenda** → los nombres ya usados se sugieren al sumar gente a un grupo
-  nuevo, para no tener que escribirlos otra vez.
+  nuevo, para no tener que escribirlos otra vez. Se gestiona desde el link al
+  pie de la home, y cada persona puede tener un alias bancario.
 - **Gastos** → descripción, monto, quién pagó y entre quiénes se divide, siempre
   en partes iguales.
 - **Balances** → cuánto pagó de más o de menos cada persona.
@@ -151,6 +152,15 @@ agenda. Por eso olvidar un nombre de la agenda (la × en la sugerencia) no toca
 ningún grupo, y sacar a alguien de un grupo no lo borra de la agenda. Es una
 comodidad para escribir menos, no una identidad compartida: si la lectura de la
 agenda falla, la app funciona igual y sólo deja de sugerir.
+
+**El alias bancario se copia, no se referencia.** Cada persona de la agenda
+puede tener un alias (texto breve). Al sumarla a un grupo, el alias se copia
+adentro del grupo junto con el nombre, y el reporte lo muestra al lado de quien
+tiene que cobrar, en la línea de la deuda: es la única línea donde hace falta
+saber a dónde transferir. Como es una copia, **cargar o cambiar un alias sólo se
+ve en los grupos que armes después**: los que ya existen se quedan con lo que se
+llevaron. Lo mismo vale para renombrar desde la pantalla de gestión. Es a
+propósito: un grupo cerrado no se reescribe solo.
 
 **Eliminar una persona borra sus gastos.** Todos los gastos que pagó y todos
 aquellos en los que participaba. Como por defecto participan todos los

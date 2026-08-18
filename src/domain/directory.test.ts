@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  createPerson,
+  editPerson,
+  findByName,
   forgetPerson,
   isAlreadyInGroup,
+  isNameTaken,
   personKey,
   rememberPerson,
   seedDirectory,
+  sortedDirectory,
   suggestPeople,
   type SavedPerson,
 } from './directory'
@@ -97,5 +102,66 @@ describe('siembra inicial', () => {
     const dos = addPerson(addPerson(createGroup('Dos'), 'ana'), 'Caro')
 
     expect(seedDirectory([uno, dos], 5).map((p) => p.name)).toEqual(['ana', 'Beto', 'Caro'])
+  })
+})
+
+describe('gestión de la agenda', () => {
+  it('crea con alias y lo deja disponible por nombre', () => {
+    const { directory, person } = createPerson([], '  Ana  ', ' ana.mp ', 7)
+
+    expect(person).toEqual({ id: person.id, name: 'Ana', lastUsedAt: 7, alias: 'ana.mp' })
+    expect(findByName(directory, 'ANA')?.alias).toBe('ana.mp')
+  })
+
+  it('sin alias no guarda la clave, para no dejar undefined en la base', () => {
+    const { person } = createPerson([], 'Ana', '   ', 7)
+
+    expect('alias' in person).toBe(false)
+  })
+
+  it('editar cambia nombre y alias sin tocar el id ni el orden de uso', () => {
+    const base = createPerson([], 'Martn', '', 7).directory
+    const { directory, person } = editPerson(base, base[0].id, 'Martín', 'martin.cbu')
+
+    expect(person).toEqual({ id: base[0].id, name: 'Martín', lastUsedAt: 7, alias: 'martin.cbu' })
+    expect(directory).toHaveLength(1)
+  })
+
+  it('editar con el alias vacío lo borra', () => {
+    const base = createPerson([], 'Ana', 'ana.mp', 7).directory
+    const { person } = editPerson(base, base[0].id, 'Ana', '')
+
+    expect(person && 'alias' in person).toBe(false)
+  })
+
+  it('editar a alguien que ya no está no inventa una entrada nueva', () => {
+    const { directory, person } = editPerson([], 'fantasma', 'Ana', '')
+
+    expect(directory).toEqual([])
+    expect(person).toBeUndefined()
+  })
+
+  it('recordar a alguien al sumarlo a un grupo no le pisa el alias', () => {
+    const base = createPerson([], 'Ana', 'ana.mp', 7).directory
+    const { person } = rememberPerson(base, 'ana', 99)
+
+    expect(person.alias).toBe('ana.mp')
+    expect(person.lastUsedAt).toBe(99)
+  })
+
+  it('detecta el nombre ocupado por otra entrada, no por uno mismo', () => {
+    const directory = agenda([['Ana', 1], ['Beto', 2]])
+
+    expect(isNameTaken(directory, 'ana', null)).toBe(true)
+    // Guardar a Ana sin cambiarle el nombre no choca consigo misma.
+    expect(isNameTaken(directory, 'Ana', 'p0')).toBe(false)
+    expect(isNameTaken(directory, 'Ana', 'p1')).toBe(true)
+    expect(isNameTaken(directory, 'Caro', null)).toBe(false)
+  })
+
+  it('la lista de gestión va alfabética, no por uso', () => {
+    const directory = agenda([['Zoe', 100], ['ana', 1], ['Ñoño', 50]])
+
+    expect(sortedDirectory(directory).map((person) => person.name)).toEqual(['ana', 'Ñoño', 'Zoe'])
   })
 })

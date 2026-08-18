@@ -739,6 +739,26 @@ button {
 
 /* `margin-top: auto` lo empuja al pie de la pantalla cuando hay pocos grupos;
    con la lista larga simplemente queda al final, después de las tarjetas. */
+/* Pie de la home: el acceso a la agenda y el sello del build. */
+.home-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.link-quiet {
+  border: 0;
+  background: none;
+  min-height: 44px;
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .build-version {
   margin: auto 0 0;
   padding-top: 8px;

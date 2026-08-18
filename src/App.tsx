@@ -7,13 +7,21 @@ import {
   putGroup,
   putSavedPerson,
 } from './db/db'
-import { forgetPerson, rememberPerson, type SavedPerson } from './domain/directory'
+import {
+  createPerson,
+  editPerson,
+  forgetPerson,
+  rememberPerson,
+  type SavedPerson,
+} from './domain/directory'
 import { createGroup } from './domain/mutations'
 import type { Group } from './domain/types'
 import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog'
 import { ExpenseScreen } from './ui/ExpenseScreen'
 import { GroupScreen } from './ui/GroupScreen'
 import { GroupsScreen } from './ui/GroupsScreen'
+import { PeopleScreen } from './ui/PeopleScreen'
+import { PersonScreen } from './ui/PersonScreen'
 import { Topbar } from './ui/Topbar'
 import { ReportScreen } from './ui/ReportScreen'
 import { navigate, paths, useRoute } from './ui/useRoute'
@@ -25,7 +33,9 @@ function sortGroups(groups: Group[]): Group[] {
 export default function App() {
   const route = useRoute()
   const [groups, setGroups] = useState<Group[] | null>(null)
-  const [directory, setDirectory] = useState<SavedPerson[]>([])
+  // null mientras no se leyó: sin eso, entrar directo a la pantalla de una
+  // persona rebotaría a la lista antes de que la agenda termine de cargar.
+  const [directory, setDirectory] = useState<SavedPerson[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null)
 
@@ -35,7 +45,9 @@ export default function App() {
       .catch(() => setError('No se pudieron leer los datos guardados en este dispositivo.'))
     // La agenda es una comodidad, no un dato del que dependa nada: si no se
     // puede leer, la app funciona igual y sólo deja de sugerir nombres.
-    getDirectory().then(setDirectory).catch(() => undefined)
+    getDirectory()
+      .then(setDirectory)
+      .catch(() => setDirectory([]))
   }, [])
 
   // Todas las escrituras guardan el grupo completo: una sola transacción por cambio.
@@ -65,7 +77,7 @@ export default function App() {
   // Guarda sólo el nombre: no queda ningún vínculo con el grupo ni con la persona.
   const handleRemember = useCallback(
     async (name: string) => {
-      const { directory: next, person } = rememberPerson(directory, name)
+      const { directory: next, person } = rememberPerson(directory ?? [], name)
       setDirectory(next)
       try {
         await putSavedPerson(person)
@@ -78,13 +90,35 @@ export default function App() {
 
   /** Olvidar un nombre de la agenda. No toca a ningún grupo. */
   const handleForget = useCallback(async (personId: string) => {
-    setDirectory((current) => forgetPerson(current, personId))
+    setDirectory((current) => forgetPerson(current ?? [], personId))
     try {
       await deleteSavedPerson(personId)
     } catch {
       // Idem: la agenda es un extra, no vale romper la pantalla por esto.
     }
   }, [])
+
+  /**
+   * Alta y edición desde la pantalla de gestión. Sólo escribe en la agenda:
+   * los grupos que ya existen se quedan con la copia que se llevaron.
+   */
+  const handleSavePerson = useCallback(
+    async (personId: string | null, name: string, alias: string) => {
+      const current = directory ?? []
+      const result = personId
+        ? editPerson(current, personId, name, alias)
+        : createPerson(current, name, alias)
+      setDirectory(result.directory)
+
+      if (!result.person) return
+      try {
+        await putSavedPerson(result.person)
+      } catch {
+        setError('No se pudieron guardar los cambios en este dispositivo.')
+      }
+    },
+    [directory],
+  )
 
   const handleDelete = useCallback(async (groupId: string) => {
     setGroups((current) => (current ?? []).filter((group) => group.id !== groupId))
@@ -95,16 +129,28 @@ export default function App() {
     }
   }, [])
 
-  const group = route.name === 'groups' ? undefined : (groups ?? []).find((item) => item.id === route.groupId)
+  // La agenda tiene sus propias pantallas: no cuelgan de ningún grupo.
+  const inGroup = route.name === 'group' || route.name === 'expense' || route.name === 'report'
+  const group = inGroup ? (groups ?? []).find((item) => item.id === route.groupId) : undefined
+  const person =
+    route.name === 'person' && route.personId
+      ? (directory ?? []).find((item) => item.id === route.personId)
+      : undefined
 
   // El grupo puede haberse eliminado, o el hash puede haber quedado viejo.
-  const missingGroup = groups !== null && route.name !== 'groups' && !group
+  const missingGroup = groups !== null && inGroup && !group
+  const missingPerson =
+    directory !== null && route.name === 'person' && route.personId !== null && !person
   // Sin 2 integrantes no se puede cargar un gasto.
   const cannotLoadExpense = route.name === 'expense' && !!group && group.people.length < 2
 
   useEffect(() => {
     if (missingGroup) navigate(paths.groups)
   }, [missingGroup])
+
+  useEffect(() => {
+    if (missingPerson) navigate(paths.people)
+  }, [missingPerson])
 
   useEffect(() => {
     if (cannotLoadExpense && group) navigate(paths.group(group.id))
@@ -125,7 +171,7 @@ export default function App() {
     )
   }
 
-  if (groups === null) {
+  if (groups === null || directory === null) {
     return (
       <div className="app">
         <Topbar />
@@ -135,7 +181,20 @@ export default function App() {
 
   return (
     <div className="app">
-      {route.name === 'groups' || !group ? (
+      {route.name === 'people' ? (
+        <PeopleScreen directory={directory} />
+      ) : route.name === 'person' && !missingPerson ? (
+        <PersonScreen
+          // Remonta el formulario al cambiar de persona: los campos arrancan
+          // de los datos de quien se está editando.
+          key={person?.id ?? 'nuevo'}
+          directory={directory}
+          person={person ?? null}
+          onSave={handleSavePerson}
+          onDelete={handleForget}
+          onConfirm={setConfirm}
+        />
+      ) : route.name === 'groups' || !group ? (
         <GroupsScreen
           groups={groups}
           onCreate={handleCreate}

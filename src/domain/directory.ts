@@ -15,13 +15,23 @@ export interface SavedPerson {
   name: string
   /** Sólo para ordenar las sugerencias: lo más usado, primero. */
   lastUsedAt: number
+  /** Alias bancario. Se copia al integrante al sumarlo a un grupo. */
+  alias?: string
 }
 
 /** Cuántas sugerencias se muestran con el campo todavía vacío. */
 export const SUGGESTION_LIMIT = 5
 
+/** Un alias de CBU entra de sobra; el límite es para que no rompa el reporte. */
+export const ALIAS_MAX_LENGTH = 40
+
 /** "  josé   luis " -> "José   luis" pierde los espacios de más, no el acento. */
 export function normalizeName(raw: string): string {
+  return raw.trim().replace(/\s+/g, ' ')
+}
+
+/** El alias se guarda tal cual se escribe: puede llevar puntos, guiones y dígitos. */
+export function normalizeAlias(raw: string): string {
   return raw.trim().replace(/\s+/g, ' ')
 }
 
@@ -60,6 +70,72 @@ export function rememberPerson(
 
 export function forgetPerson(directory: SavedPerson[], personId: string): SavedPerson[] {
   return directory.filter((person) => person.id !== personId)
+}
+
+/** Para listarla en la pantalla de gestión: alfabético, no por uso. */
+export function sortedDirectory(directory: SavedPerson[]): SavedPerson[] {
+  return [...directory].sort((a, b) => a.name.localeCompare(b.name, 'es-AR') || a.id.localeCompare(b.id))
+}
+
+/** La entrada de la agenda que se llama así, si existe. */
+export function findByName(directory: SavedPerson[], rawName: string): SavedPerson | undefined {
+  const key = personKey(rawName)
+  return key === '' ? undefined : directory.find((person) => personKey(person.name) === key)
+}
+
+/** true si otra entrada de la agenda ya usa ese nombre. */
+export function isNameTaken(
+  directory: SavedPerson[],
+  rawName: string,
+  exceptId: string | null,
+): boolean {
+  const found = findByName(directory, rawName)
+  return found !== undefined && found.id !== exceptId
+}
+
+/** Construye la entrada sin la clave `alias` cuando está vacío, en vez de con undefined. */
+function withAlias(person: Omit<SavedPerson, 'alias'>, alias: string): SavedPerson {
+  return alias === '' ? person : { ...person, alias }
+}
+
+/** Alta desde la pantalla de gestión: acá sí se puede cargar el alias de entrada. */
+export function createPerson(
+  directory: SavedPerson[],
+  rawName: string,
+  rawAlias: string,
+  now: number = Date.now(),
+): { directory: SavedPerson[]; person: SavedPerson } {
+  const person = withAlias(
+    { id: newId(), name: normalizeName(rawName), lastUsedAt: now },
+    normalizeAlias(rawAlias),
+  )
+  return { directory: [...directory, person], person }
+}
+
+/**
+ * Edita una entrada de la agenda por id, así el nombre puede cambiar.
+ *
+ * Sólo toca la agenda: los grupos que ya usan ese nombre (y la copia del alias
+ * que se llevaron) quedan como están. El cambio se ve en los grupos que armes
+ * de acá en adelante.
+ */
+export function editPerson(
+  directory: SavedPerson[],
+  personId: string,
+  rawName: string,
+  rawAlias: string,
+): { directory: SavedPerson[]; person: SavedPerson | undefined } {
+  const existing = directory.find((item) => item.id === personId)
+  if (!existing) return { directory, person: undefined }
+
+  const person = withAlias(
+    { id: existing.id, name: normalizeName(rawName), lastUsedAt: existing.lastUsedAt },
+    normalizeAlias(rawAlias),
+  )
+  return {
+    directory: directory.map((item) => (item.id === personId ? person : item)),
+    person,
+  }
 }
 
 /**

@@ -1,6 +1,13 @@
 export interface Person {
   id: string
   name: string
+  /**
+   * Alias bancario, copiado de la agenda en el momento de sumar a la persona
+   * al grupo. Sólo se usa para mostrarlo en el reporte: no interviene en
+   * ningún cálculo. Como es una copia, editarlo en la agenda no cambia los
+   * grupos que ya existen.
+   */
+  alias?: string
 }
 
 export interface Expense {

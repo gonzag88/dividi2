@@ -1,3 +1,10 @@
+import {
+  ALIAS_MAX_LENGTH,
+  isNameTaken,
+  normalizeAlias,
+  normalizeName,
+  type SavedPerson,
+} from './directory'
 import { parseAmountToCents } from './money'
 import type { ExpenseInput, Group } from './types'
 
@@ -7,6 +14,44 @@ export function validateGroupName(raw: string): string | null {
 
 export function validatePersonName(raw: string): string | null {
   return raw.trim() === '' ? 'Ingresá un nombre.' : null
+}
+
+export interface SavedPersonErrors {
+  name?: string
+  alias?: string
+}
+
+export type SavedPersonValidation =
+  | { ok: true; name: string; alias: string }
+  | { ok: false; errors: SavedPersonErrors }
+
+/**
+ * Valida una entrada de la agenda. `exceptId` es la entrada que se está
+ * editando: sin eso, guardarla sin tocar el nombre chocaría consigo misma.
+ */
+export function validateSavedPerson(
+  raw: { name: string; alias: string },
+  directory: SavedPerson[],
+  exceptId: string | null,
+): SavedPersonValidation {
+  const errors: SavedPersonErrors = {}
+
+  const name = normalizeName(raw.name)
+  if (name === '') {
+    errors.name = 'Ingresá un nombre.'
+  } else if (isNameTaken(directory, name, exceptId)) {
+    errors.name = 'Ya hay alguien con ese nombre.'
+  }
+
+  const alias = normalizeAlias(raw.alias)
+  // El alias es opcional: lo único que se controla es que no sea un texto largo.
+  if (alias.length > ALIAS_MAX_LENGTH) {
+    errors.alias = `El alias no puede tener más de ${ALIAS_MAX_LENGTH} caracteres.`
+  }
+
+  if (Object.keys(errors).length > 0) return { ok: false, errors }
+
+  return { ok: true, name, alias }
 }
 
 export interface RawExpense {

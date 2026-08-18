@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
+import { createPerson } from './directory'
 import { group } from './fixtures'
-import { validateExpense, validateGroupName, validatePersonName } from './validation'
+import {
+  validateExpense,
+  validateGroupName,
+  validatePersonName,
+  validateSavedPerson,
+} from './validation'
 
 const g = group(['Gonzalo', 'Nico', 'Juan'])
 
@@ -125,5 +131,41 @@ describe('validateExpense', () => {
         'participants',
       ])
     }
+  })
+})
+
+describe('validateSavedPerson', () => {
+  const agenda = createPerson(createPerson([], 'Ana', 'ana.mp', 1).directory, 'Beto', '', 2)
+  const ana = agenda.directory[0]
+
+  it('acepta un nombre nuevo con alias y los normaliza', () => {
+    const result = validateSavedPerson({ name: '  Caro ', alias: ' caro.cbu ' }, agenda.directory, null)
+    expect(result).toEqual({ ok: true, name: 'Caro', alias: 'caro.cbu' })
+  })
+
+  it('el alias es opcional', () => {
+    const result = validateSavedPerson({ name: 'Caro', alias: '' }, agenda.directory, null)
+    expect(result).toEqual({ ok: true, name: 'Caro', alias: '' })
+  })
+
+  it('exige un nombre', () => {
+    const result = validateSavedPerson({ name: '   ', alias: '' }, agenda.directory, null)
+    expect(result.ok).toBe(false)
+    expect(result.ok === false && result.errors.name).toBe('Ingresá un nombre.')
+  })
+
+  it('rechaza un nombre que ya está en la agenda, sin importar cómo se escriba', () => {
+    const result = validateSavedPerson({ name: '  ana ', alias: '' }, agenda.directory, null)
+    expect(result.ok === false && result.errors.name).toBe('Ya hay alguien con ese nombre.')
+  })
+
+  it('editar a alguien sin cambiarle el nombre no choca consigo mismo', () => {
+    const result = validateSavedPerson({ name: 'Ana', alias: 'otro.mp' }, agenda.directory, ana.id)
+    expect(result).toEqual({ ok: true, name: 'Ana', alias: 'otro.mp' })
+  })
+
+  it('rechaza un alias largo', () => {
+    const result = validateSavedPerson({ name: 'Caro', alias: 'x'.repeat(41) }, agenda.directory, null)
+    expect(result.ok === false && result.errors.alias).toContain('40')
   })
 })

@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { computeBalances, isSettled } from '../domain/balances'
 import {
+  findByName,
   isAlreadyInGroup,
   normalizeName,
   personKey,
@@ -321,6 +322,10 @@ function PeopleSection({
    * Elegir de la agenda y escribir un nombre nuevo terminan acá: en los dos
    * casos el grupo crea su propia persona con el nombre copiado, y la agenda
    * se queda con el nombre para la próxima vez.
+   *
+   * El alias también se copia acá, si la agenda tiene uno para ese nombre. Se
+   * busca por nombre y no por la sugerencia tocada, así escribirlo a mano
+   * completo da el mismo resultado que elegirlo de la lista.
    */
   const add = (rawName: string) => {
     const problem = validatePersonName(rawName)
@@ -333,7 +338,7 @@ function PeopleSection({
       return
     }
     anchorTop.current = rowRef.current?.getBoundingClientRect().top ?? null
-    onSave(addPerson(group, normalizeName(rawName)))
+    onSave(addPerson(group, normalizeName(rawName), findByName(directory, rawName)?.alias))
     onRemember(rawName)
     // La fila queda abierta para seguir cargando gente de corrido.
     setName('')

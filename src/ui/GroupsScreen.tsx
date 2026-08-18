@@ -149,8 +149,19 @@ export function GroupsScreen({ groups, onCreate, onDelete, onConfirm }: Props) {
           </div>
         )}
 
-        {/* Sello del build: sirve para saber si el dispositivo ya tomó la última versión. */}
-        <p className="build-version">v{__BUILD_VERSION__}</p>
+        {/* Al pie, discreto: la agenda no es parte del uso diario, se toca de vez
+            en cuando para corregir un nombre o cargar un alias. */}
+        <div className="home-footer">
+          <button
+            type="button"
+            className="link-quiet"
+            onClick={() => navigate(paths.people)}
+          >
+            Gestionar integrantes
+          </button>
+          {/* Sello del build: sirve para saber si el dispositivo ya tomó la última versión. */}
+          <p className="build-version">v{__BUILD_VERSION__}</p>
+        </div>
       </main>
     </>
   )

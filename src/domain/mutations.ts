@@ -11,8 +11,14 @@ export function createGroup(name: string): Group {
   return { id: newId(), name: name.trim(), people: [], expenses: [] }
 }
 
-export function addPerson(group: Group, name: string): Group {
+/**
+ * El alias llega copiado de la agenda, si la persona tenía uno cargado en ese
+ * momento. Queda congelado dentro del grupo: es un dato del grupo, no un
+ * puntero a la agenda.
+ */
+export function addPerson(group: Group, name: string, alias?: string): Group {
   const person: Person = { id: newId(), name: name.trim() }
+  if (alias) person.alias = alias
   return { ...group, people: [...group.people, person] }
 }
 
