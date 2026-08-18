@@ -38,6 +38,8 @@ interface Props {
 interface PeopleProps extends Props {
   /** Agenda de nombres para sugerir. Ver `src/domain/directory.ts`. */
   directory: SavedPerson[]
+  /** El grupo se acaba de crear: el alta de integrantes arranca abierta. */
+  autoAddPeople: boolean
   onRemember: (name: string) => void
   onForget: (personId: string) => void
 }
@@ -45,6 +47,7 @@ interface PeopleProps extends Props {
 export function GroupScreen({
   group,
   directory,
+  autoAddPeople,
   onSave,
   onConfirm,
   onRemember,
@@ -102,6 +105,7 @@ export function GroupScreen({
         <PeopleSection
           group={group}
           directory={directory}
+          autoAddPeople={autoAddPeople}
           onSave={onSave}
           onConfirm={onConfirm}
           onRemember={onRemember}
@@ -248,15 +252,18 @@ function ExpensesSection({
 function PeopleSection({
   group,
   directory,
+  autoAddPeople,
   onSave,
   onConfirm,
   onRemember,
   onForget,
 }: PeopleProps) {
-  const [adding, setAdding] = useState(false)
+  const [adding, setAdding] = useState(autoAddPeople)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const rowRef = useRef<HTMLFormElement>(null)
+  const anchorTop = useRef<number | null>(null)
 
   // useLayoutEffect y no useEffect: iOS sólo abre el teclado si el foco ocurre
   // dentro del gesto que lo disparó, y los efectos de layout corren antes de
@@ -264,6 +271,27 @@ function PeopleSection({
   useLayoutEffect(() => {
     if (adding) inputRef.current?.focus()
   }, [adding])
+
+  useLayoutEffect(() => {
+    // La URL con /integrantes es sólo el empujón del grupo recién creado: se
+    // limpia enseguida para que volver a esta pantalla no reabra el campo.
+    // replaceState no dispara hashchange, así que no re-renderiza nada.
+    if (autoAddPeople) window.history.replaceState(null, '', paths.group(group.id))
+  }, [autoAddPeople, group.id])
+
+  /**
+   * Sumar gente hace crecer todo lo que está arriba (aparecen los balances, la
+   * lista de integrantes suma una fila), así que la fila de alta se escaparía
+   * hacia abajo de la pantalla y habría que scrollear después de cada persona.
+   * Se guarda dónde estaba antes del cambio y se compensa el scroll para que
+   * quede quieta. Safari no soporta `overflow-anchor`, así que va a mano.
+   */
+  useLayoutEffect(() => {
+    const before = anchorTop.current
+    anchorTop.current = null
+    if (before === null || !rowRef.current) return
+    window.scrollBy(0, rowRef.current.getBoundingClientRect().top - before)
+  }, [group.people.length])
 
   const taken = group.people.map((person) => person.name)
   // Con el campo vacío las sugerencias son un atajo a los últimos usados.
@@ -304,6 +332,7 @@ function PeopleSection({
       setError(`${normalizeName(rawName)} ya está en el grupo.`)
       return
     }
+    anchorTop.current = rowRef.current?.getBoundingClientRect().top ?? null
     onSave(addPerson(group, normalizeName(rawName)))
     onRemember(rawName)
     // La fila queda abierta para seguir cargando gente de corrido.
@@ -362,6 +391,7 @@ function PeopleSection({
 
         {adding && (
           <form
+            ref={rowRef}
             className="row"
             onSubmit={(event) => {
               event.preventDefault()

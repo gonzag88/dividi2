@@ -7,7 +7,8 @@ import { useEffect, useState } from 'react'
  */
 export type Route =
   | { name: 'groups' }
-  | { name: 'group'; groupId: string }
+  /** `addPeople` abre el alta de integrantes: es el empujón del grupo recién creado. */
+  | { name: 'group'; groupId: string; addPeople?: boolean }
   | { name: 'expense'; groupId: string; expenseId: string | null }
   | { name: 'report'; groupId: string }
 
@@ -17,6 +18,7 @@ export function parseHash(hash: string): Route {
   if (parts[0] === 'g' && parts[1]) {
     const groupId = decodeURIComponent(parts[1])
     if (parts[2] === 'report') return { name: 'report', groupId }
+    if (parts[2] === 'integrantes') return { name: 'group', groupId, addPeople: true }
     if (parts[2] === 'gasto') {
       const expenseId = parts[3] === 'nuevo' || !parts[3] ? null : decodeURIComponent(parts[3])
       return { name: 'expense', groupId, expenseId }
@@ -42,6 +44,7 @@ export function useRoute(): Route {
 export const paths = {
   groups: '#/',
   group: (groupId: string) => `#/g/${encodeURIComponent(groupId)}`,
+  groupPeople: (groupId: string) => `#/g/${encodeURIComponent(groupId)}/integrantes`,
   newExpense: (groupId: string) => `#/g/${encodeURIComponent(groupId)}/gasto/nuevo`,
   expense: (groupId: string, expenseId: string) =>
     `#/g/${encodeURIComponent(groupId)}/gasto/${encodeURIComponent(expenseId)}`,

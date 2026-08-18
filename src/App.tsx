@@ -51,6 +51,9 @@ export default function App() {
   const handleCreate = useCallback(async (name: string) => {
     const group = createGroup(name)
     setGroups((current) => sortGroups([...(current ?? []), group]))
+    // Un grupo vacío no sirve para nada: lo único que se puede hacer con él es
+    // sumarle gente, así que la app va sola hasta ahí.
+    navigate(paths.groupPeople(group.id))
     try {
       await putGroup(group)
     } catch {
@@ -152,6 +155,7 @@ export default function App() {
         <GroupScreen
           group={group}
           directory={directory}
+          autoAddPeople={route.name === 'group' && route.addPeople === true}
           onSave={saveGroup}
           onConfirm={setConfirm}
           onRemember={handleRemember}
