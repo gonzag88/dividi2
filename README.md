@@ -8,6 +8,8 @@ Pensada para usarse instalada en un iPhone desde la pantalla de inicio.
 ## Cómo funciona
 
 - **Grupos** → cada grupo tiene sus integrantes y sus gastos.
+- **Agenda** → los nombres ya usados se sugieren al sumar gente a un grupo
+  nuevo, para no tener que escribirlos otra vez.
 - **Gastos** → descripción, monto, quién pagó y entre quiénes se divide, siempre
   en partes iguales.
 - **Balances** → cuánto pagó de más o de menos cada persona.
@@ -122,7 +124,7 @@ En la computadora, con Chrome:
    - **Manifest**: tiene que mostrar `dividi2`, `standalone` y los íconos.
    - **Service Workers**: tiene que figurar `sw.js` como *activated and running*.
    - **IndexedDB → dividi2 → groups**: ahí están los grupos guardados. Recargá y
-     fijate que siguen.
+     fijate que siguen. En **people** están los nombres de la agenda.
 4. Marcá **Offline** en la pestaña Service Workers y recargá: la app tiene que
    seguir andando.
 
@@ -138,6 +140,17 @@ los balances siempre da exactamente cero.
 
 **Los importes se guardan como centavos enteros.** Nunca se hace aritmética con
 floating point, así que no hay errores acumulados del tipo `0.1 + 0.2`.
+
+**La agenda es sólo un autocompletado de nombres.** Al agregar un integrante se
+guarda su nombre en un store aparte (`people`), y la próxima vez aparece como
+sugerencia ordenada por uso más reciente. Elegir una sugerencia **copia el
+nombre**: el grupo crea su propia `Person` con un id nuevo. No queda ningún
+vínculo entre las dos cosas, ni en un sentido ni en el otro — la agenda no sabe
+en qué grupos estuvo cada nombre, y el grupo no sabe que el nombre salió de la
+agenda. Por eso olvidar un nombre de la agenda (la × en la sugerencia) no toca
+ningún grupo, y sacar a alguien de un grupo no lo borra de la agenda. Es una
+comodidad para escribir menos, no una identidad compartida: si la lectura de la
+agenda falla, la app funciona igual y sólo deja de sugerir.
 
 **Eliminar una persona borra sus gastos.** Todos los gastos que pagó y todos
 aquellos en los que participaba. Como por defecto participan todos los
@@ -159,7 +172,7 @@ no la uses como pestaña.
 ```
 src/
   domain/     lógica pura y testeada: dinero, división, balances, deudas, reporte
-  db/         IndexedDB (un documento por grupo)
+  db/         IndexedDB (un documento por grupo + la agenda de nombres)
   ui/         pantallas
 scripts/      generador de íconos (PNG escritos a mano, sin dependencias)
 ```

@@ -1,5 +1,12 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { computeBalances, isSettled } from '../domain/balances'
+import {
+  isAlreadyInGroup,
+  normalizeName,
+  personKey,
+  suggestPeople,
+  type SavedPerson,
+} from '../domain/directory'
 import { simplifyDebts } from '../domain/debts'
 import { formatCents, formatSignedCents } from '../domain/money'
 import {
@@ -28,7 +35,21 @@ interface Props {
   onConfirm: (request: ConfirmRequest) => void
 }
 
-export function GroupScreen({ group, onSave, onConfirm }: Props) {
+interface PeopleProps extends Props {
+  /** Agenda de nombres para sugerir. Ver `src/domain/directory.ts`. */
+  directory: SavedPerson[]
+  onRemember: (name: string) => void
+  onForget: (personId: string) => void
+}
+
+export function GroupScreen({
+  group,
+  directory,
+  onSave,
+  onConfirm,
+  onRemember,
+  onForget,
+}: PeopleProps) {
   const hasPeople = group.people.length > 0
 
   return (
@@ -78,7 +99,14 @@ export function GroupScreen({ group, onSave, onConfirm }: Props) {
         )}
 
         {/* Los integrantes van al final: se tocan mucho menos que los saldos. */}
-        <PeopleSection group={group} onSave={onSave} onConfirm={onConfirm} />
+        <PeopleSection
+          group={group}
+          directory={directory}
+          onSave={onSave}
+          onConfirm={onConfirm}
+          onRemember={onRemember}
+          onForget={onForget}
+        />
       </main>
 
       {canAddExpenses(group) && (
@@ -217,7 +245,14 @@ function ExpensesSection({
   )
 }
 
-function PeopleSection({ group, onSave, onConfirm }: Props) {
+function PeopleSection({
+  group,
+  directory,
+  onSave,
+  onConfirm,
+  onRemember,
+  onForget,
+}: PeopleProps) {
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -229,6 +264,17 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
   useLayoutEffect(() => {
     if (adding) inputRef.current?.focus()
   }, [adding])
+
+  const taken = group.people.map((person) => person.name)
+  // Con el campo vacío las sugerencias son un atajo a los últimos usados.
+  const suggestions = adding ? suggestPeople(directory, name, taken) : []
+  const typed = normalizeName(name)
+  const duplicate = typed !== '' && isAlreadyInGroup(taken, typed)
+  // Si lo tipeado ya está en las sugerencias, la fila de crear sobra.
+  const canCreate =
+    typed !== '' &&
+    !duplicate &&
+    !suggestions.some((person) => personKey(person.name) === personKey(typed))
 
   const open = () => {
     setName('')
@@ -243,16 +289,27 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
     setError(null)
   }
 
-  const submit = () => {
-    const problem = validatePersonName(name)
+  /**
+   * Elegir de la agenda y escribir un nombre nuevo terminan acá: en los dos
+   * casos el grupo crea su propia persona con el nombre copiado, y la agenda
+   * se queda con el nombre para la próxima vez.
+   */
+  const add = (rawName: string) => {
+    const problem = validatePersonName(rawName)
     if (problem) {
       setError(problem)
       return
     }
-    onSave(addPerson(group, name))
+    if (isAlreadyInGroup(taken, rawName)) {
+      setError(`${normalizeName(rawName)} ya está en el grupo.`)
+      return
+    }
+    onSave(addPerson(group, normalizeName(rawName)))
+    onRemember(rawName)
     // La fila queda abierta para seguir cargando gente de corrido.
     setName('')
     setError(null)
+    inputRef.current?.focus()
   }
 
   const confirmRemove = (person: Person) => {
@@ -308,7 +365,7 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
             className="row"
             onSubmit={(event) => {
               event.preventDefault()
-              submit()
+              add(name)
             }}
           >
             <span className="tile tile-mint">
@@ -318,7 +375,7 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
               ref={inputRef}
               className="row-input"
               value={name}
-              placeholder="Nombre"
+              placeholder="Buscar o escribir un nombre"
               aria-label="Nombre de la persona"
               autoComplete="off"
               autoCorrect="off"
@@ -332,6 +389,59 @@ function PeopleSection({ group, onSave, onConfirm }: Props) {
           </form>
         )}
       </div>
+
+      {/* Las sugerencias van en su propia tarjeta, debajo del campo, como un
+          desplegable. El preventDefault del mousedown evita que tocarlas le
+          saque el foco al input: si no, el onBlur cerraría la fila antes de que
+          llegara el click, y en iOS se cerraría el teclado en cada alta. */}
+      {adding && (suggestions.length > 0 || canCreate || duplicate) && (
+        <div className="card suggestions" onMouseDown={(event) => event.preventDefault()}>
+          {suggestions.map((person) => (
+            <div key={person.id} className="row">
+              <button
+                type="button"
+                className="row-button"
+                onClick={() => add(person.name)}
+              >
+                <span className={`tile ${tileClass(person.id)}`}>{initial(person.name)}</span>
+                <span className="row-main">
+                  <span className="row-title">{person.name}</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="icon-btn"
+                aria-label={`Olvidar a ${person.name}`}
+                onClick={() => onForget(person.id)}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+
+          {/* Avisa antes de tocar nada: escribir a alguien que ya está no hace
+              nada, y sin esto la lista se vaciaría sin explicar por qué. */}
+          {duplicate && (
+            <div className="row">
+              <span className="row-main">
+                <span className="row-sub">{typed} ya está en el grupo.</span>
+              </span>
+            </div>
+          )}
+
+          {canCreate && (
+            <button type="button" className="row tappable" onClick={() => add(typed)}>
+              <span className="tile tile-mint">
+                <PlusIcon size={18} />
+              </span>
+              <span className="row-main">
+                <span className="row-title">Crear “{typed}”</span>
+                <span className="row-sub">Persona nueva</span>
+              </span>
+            </button>
+          )}
+        </div>
+      )}
 
       {error && <p className="error">{error}</p>}
     </section>

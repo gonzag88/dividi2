@@ -633,6 +633,25 @@ button {
   gap: 8px;
 }
 
+/* ---------- sugerencias de la agenda ---------- */
+
+/* Desplegable de nombres ya usados, debajo del campo de integrante nuevo.
+   Tiles más chicos: se lee de una que es una lista de sugerencias y no la de
+   integrantes del grupo. */
+.suggestions .row {
+  min-height: 52px;
+}
+
+.suggestions .tile {
+  width: 36px;
+  height: 36px;
+  font-size: 15px;
+}
+
+.suggestions .row-title {
+  font-weight: 600;
+}
+
 /* ---------- estados vacíos ---------- */
 
 .empty {

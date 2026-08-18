@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import { deleteGroup as deleteGroupFromDb, getAllGroups, putGroup } from './db/db'
+import {
+  deleteGroup as deleteGroupFromDb,
+  deleteSavedPerson,
+  getAllGroups,
+  getDirectory,
+  putGroup,
+  putSavedPerson,
+} from './db/db'
+import { forgetPerson, rememberPerson, type SavedPerson } from './domain/directory'
 import { createGroup } from './domain/mutations'
 import type { Group } from './domain/types'
 import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog'
@@ -17,6 +25,7 @@ function sortGroups(groups: Group[]): Group[] {
 export default function App() {
   const route = useRoute()
   const [groups, setGroups] = useState<Group[] | null>(null)
+  const [directory, setDirectory] = useState<SavedPerson[]>([])
   const [error, setError] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null)
 
@@ -24,6 +33,9 @@ export default function App() {
     getAllGroups()
       .then(setGroups)
       .catch(() => setError('No se pudieron leer los datos guardados en este dispositivo.'))
+    // La agenda es una comodidad, no un dato del que dependa nada: si no se
+    // puede leer, la app funciona igual y sólo deja de sugerir nombres.
+    getDirectory().then(setDirectory).catch(() => undefined)
   }, [])
 
   // Todas las escrituras guardan el grupo completo: una sola transacción por cambio.
@@ -43,6 +55,31 @@ export default function App() {
       await putGroup(group)
     } catch {
       setError('No se pudo crear el grupo en este dispositivo.')
+    }
+  }, [])
+
+  // Agregar a alguien a un grupo lo deja anotado en la agenda para la próxima.
+  // Guarda sólo el nombre: no queda ningún vínculo con el grupo ni con la persona.
+  const handleRemember = useCallback(
+    async (name: string) => {
+      const { directory: next, person } = rememberPerson(directory, name)
+      setDirectory(next)
+      try {
+        await putSavedPerson(person)
+      } catch {
+        // Que no se guarde la sugerencia no invalida al integrante ya agregado.
+      }
+    },
+    [directory],
+  )
+
+  /** Olvidar un nombre de la agenda. No toca a ningún grupo. */
+  const handleForget = useCallback(async (personId: string) => {
+    setDirectory((current) => forgetPerson(current, personId))
+    try {
+      await deleteSavedPerson(personId)
+    } catch {
+      // Idem: la agenda es un extra, no vale romper la pantalla por esto.
     }
   }, [])
 
@@ -112,7 +149,14 @@ export default function App() {
           onConfirm={setConfirm}
         />
       ) : (
-        <GroupScreen group={group} onSave={saveGroup} onConfirm={setConfirm} />
+        <GroupScreen
+          group={group}
+          directory={directory}
+          onSave={saveGroup}
+          onConfirm={setConfirm}
+          onRemember={handleRemember}
+          onForget={handleForget}
+        />
       )}
 
       <ConfirmDialog request={confirm} onCancel={() => setConfirm(null)} />
