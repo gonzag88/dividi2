@@ -26,7 +26,7 @@ export function buildReport(group: Group): string {
   }
   lines.push('')
 
-  lines.push('*DEUDAS*')
+  lines.push('*QUIÉN PAGA A QUIÉN*')
   if (isSettled(balances) || debts.length === 0) {
     lines.push('Está todo saldado.')
   } else {

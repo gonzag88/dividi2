@@ -28,7 +28,7 @@ describe('buildReport', () => {
         'Nico: -$10.000',
         'Juan: -$34.999,99',
         '',
-        '*DEUDAS*',
+        '*QUIÉN PAGA A QUIÉN*',
         'Juan → Gonzalo: $34.999,99',
         'Nico → Gonzalo: $10.000',
         '',
@@ -43,7 +43,7 @@ describe('buildReport', () => {
   it('muestra que está todo saldado cuando no hay deudas', () => {
     const g = group(['A', 'B'], [expense('e1', 1000, 'p1', ['p1', 'p2'])])
     const saldado = { ...g, expenses: [...g.expenses, expense('e2', 1000, 'p2', ['p1', 'p2'], 2)] }
-    expect(buildReport(saldado)).toContain('*DEUDAS*\nEstá todo saldado.')
+    expect(buildReport(saldado)).toContain('*QUIÉN PAGA A QUIÉN*\nEstá todo saldado.')
   })
 
   it('aclara entre quiénes se divide cada gasto', () => {

@@ -14,7 +14,8 @@ Pensada para usarse instalada en un iPhone desde la pantalla de inicio.
 - **Gastos** → descripción, monto, quién pagó y entre quiénes se divide, siempre
   en partes iguales.
 - **Balances** → cuánto pagó de más o de menos cada persona.
-- **Deudas** → las transferencias necesarias para saldar, ya simplificadas.
+- **Quién paga a quién** → las transferencias necesarias para saldar, ya
+  simplificadas.
 - **Reporte** → texto listo para copiar y pegar en WhatsApp o Telegram.
 
 ## Stack

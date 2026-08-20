@@ -158,7 +158,7 @@ function DebtsSection({ group }: { group: Group }) {
 
   return (
     <section className="section">
-      <h2 className="section-title">Deudas</h2>
+      <h2 className="section-title">Quién paga a quién</h2>
       <div className="card">
         {isSettled(balances) || debts.length === 0 ? (
           <div className="empty">
