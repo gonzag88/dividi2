@@ -66,7 +66,7 @@ export function GroupScreen({
             className="btn-link"
             onClick={() => navigate(paths.report(group.id))}
           >
-            Reporte
+            Compartir
           </button>
         }
       />

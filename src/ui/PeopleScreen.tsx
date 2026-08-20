@@ -1,16 +1,34 @@
 import { sortedDirectory, type SavedPerson } from '../domain/directory'
+import type { ConfirmRequest } from './ConfirmDialog'
+import { SwipeToDelete } from './SwipeToDelete'
 import { initial, tileClass } from './tiles'
 import { BackButton, Topbar } from './Topbar'
 import { PlusIcon } from './icons'
 import { goBack, navigate, paths } from './useRoute'
+
+interface Props {
+  directory: SavedPerson[]
+  onDelete: (personId: string) => void
+  onConfirm: (request: ConfirmRequest) => void
+}
 
 /**
  * Gestión de la agenda de integrantes: la lista de nombres que se sugieren al
  * armar un grupo. No es la lista de nadie en particular y no pertenece a
  * ningún grupo — tocar algo acá nunca cambia un grupo que ya existe.
  */
-export function PeopleScreen({ directory }: { directory: SavedPerson[] }) {
+export function PeopleScreen({ directory, onDelete, onConfirm }: Props) {
   const people = sortedDirectory(directory)
+
+  const confirmDelete = (person: SavedPerson) => {
+    onConfirm({
+      title: `Eliminar a ${person.name}`,
+      message:
+        'Deja de aparecer como sugerencia al sumar gente a un grupo. Los grupos donde ya está no se tocan.',
+      confirmLabel: 'Eliminar integrante',
+      onConfirm: () => onDelete(person.id),
+    })
+  }
 
   return (
     <>
@@ -46,21 +64,22 @@ export function PeopleScreen({ directory }: { directory: SavedPerson[] }) {
             </button>
           </div>
         ) : (
-          <div className="card">
+          <div className="cards">
             {people.map((person) => (
-              <button
-                key={person.id}
-                type="button"
-                className="row tappable"
-                onClick={() => navigate(paths.person(person.id))}
-              >
-                <span className={`tile ${tileClass(person.id)}`}>{initial(person.name)}</span>
-                <span className="row-main">
-                  <span className="row-title">{person.name}</span>
-                  <span className="row-sub">{person.alias ?? 'Sin alias'}</span>
-                </span>
-                <span className="chevron">›</span>
-              </button>
+              <SwipeToDelete key={person.id} onDelete={() => confirmDelete(person)}>
+                <button
+                  type="button"
+                  className="row tappable"
+                  onClick={() => navigate(paths.person(person.id))}
+                >
+                  <span className={`tile ${tileClass(person.id)}`}>{initial(person.name)}</span>
+                  <span className="row-main">
+                    <span className="row-title">{person.name}</span>
+                    <span className="row-sub">{person.alias ?? 'Sin alias'}</span>
+                  </span>
+                  <span className="chevron">›</span>
+                </button>
+              </SwipeToDelete>
             ))}
           </div>
         )}

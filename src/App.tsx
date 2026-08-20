@@ -182,7 +182,7 @@ export default function App() {
   return (
     <div className="app">
       {route.name === 'people' ? (
-        <PeopleScreen directory={directory} />
+        <PeopleScreen directory={directory} onDelete={handleForget} onConfirm={setConfirm} />
       ) : route.name === 'person' && !missingPerson ? (
         <PersonScreen
           // Remonta el formulario al cambiar de persona: los campos arrancan
